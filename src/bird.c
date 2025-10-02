@@ -30,8 +30,16 @@ void Bird_Jump(Bird* bird) {
 }
 
 void Bird_Kill(Bird* bird) {
-    bird->alive = false;
-    bird->color = RED;
+    if (bird->alive) {
+        bird->alive = false;
+        bird->timeOfDeath = GetTime();
+    }
+}
+
+float Bird_GetTimeSinceDeath(Bird* bird) {
+    if (bird->alive) { return -1.0f; };
+
+    return GetTime() - bird->timeOfDeath;
 }
 
 void Bird_Update(Bird* bird, float delta) {
@@ -82,7 +90,9 @@ void Bird_Draw(Bird* bird) {
     Rectangle target = {.x = bird->x, .y = bird->y, .width = bWidth * wFac, .height = bHeight * hFac};
     Vector2 origin = {.x = bWidth / 2, .y = bHeight / 2};
 
-    DrawTexturePro(texture, source, target, origin, bird->v * 7, bird->color);
+    Color color = bird->alive ? bird->color : ColorLerp(bird->color, RED, clamp(Bird_GetTimeSinceDeath(bird), 0, 1));
+
+    DrawTexturePro(texture, source, target, origin, bird->v * 7, color);
 }
 
 void Bird_CycleColor(Bird* bird) {

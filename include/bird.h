@@ -22,6 +22,8 @@ typedef struct Bird {
     bool alive; // Is bird alive?
     Color color;
     Texture texture;
+
+    double timeOfDeath;
 } Bird;
 
 // ===================~-
@@ -32,6 +34,8 @@ typedef struct Bird {
 void Bird_Jump(Bird* bird);
 // Kills bird
 void Bird_Kill(Bird* bird);
+
+float Bird_GetTimeSinceDeath(Bird* bird);
 
 // Update bird position & velocity
 void Bird_Update(Bird* bird, float delta);

@@ -42,7 +42,6 @@ void ResetGame(Game* game) {
     
     game->position = 0.0f;
     game->speed = 60.0f * 2.0f;
-    game->timeOfDeath = 0.0;
     game->state = GS_WAITING;
 
     // Clear pipes
@@ -60,7 +59,6 @@ void StartGame(Game* game) {
 
 void EndGame(Game* game) {
     game->state = GS_ENDED;
-    game->timeOfDeath = GetTime();
 
     Interface_SwitchScreen(&game->interface, SCR_DEAD);
 }
@@ -247,7 +245,5 @@ void SetSaveFileName(Game* game, char* name) {
 }
 
 float GetTimeSinceDeath(Game* game) {
-    if (game->bird.alive) { return -1.0f; };
-
-    return GetTime() - game->timeOfDeath;
+    return Bird_GetTimeSinceDeath(&game->bird);
 }

@@ -8,7 +8,7 @@
 // ===================~-
 
 // Whether to render debug text on screen, comment out to disable
-#define DEBUG
+// #define DEBUG
 
 // ===================~-
 // Types

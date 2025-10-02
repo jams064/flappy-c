@@ -19,10 +19,12 @@ static void DrawMenuScreen(Interface* interface, Game* game) {
 static void DrawGameScreen(Interface* interface, Game* game) {
     Color textColor = game->currentScore >= game->saveData.highScore ? YELLOW : WHITE;
 
-    DrawTextCentered(TextFormat("Highscore: %i", game->saveData.highScore), SCREEN_WIDTH, 5, 15, textColor); // Highscore text
+    // HIGHSCORE TEXT
+    DrawTextCentered(TextFormat("Highscore: %i", game->saveData.highScore), SCREEN_WIDTH, 5, 15, textColor);
 
-    DrawTextCentered(TextFormat("%i", game->currentScore), SCREEN_WIDTH, 24, 45, ColorAlpha(ColorBrightness(textColor, -0.5), 0.9)); // Current score shadow
-    DrawTextCentered(TextFormat("%i", game->currentScore), SCREEN_WIDTH, 20, 45, textColor); // Current score text
+    // CURRENT SCORE TEXT
+    DrawTextCentered(TextFormat("%i", game->currentScore), SCREEN_WIDTH, 24, 45, ColorAlpha(ColorBrightness(textColor, -0.5), 0.9)); // Shadow
+    DrawTextCentered(TextFormat("%i", game->currentScore), SCREEN_WIDTH, 20, 45, textColor); // Text
 
     // Flair text when you're 10 points away from beating highscore
     if (game->saveData.highScore > game->currentScore && game->saveData.highScore - game->currentScore < 10) {
@@ -39,16 +41,20 @@ static void DrawGameScreen(Interface* interface, Game* game) {
 static void DrawDeathScreen(Interface* interface, Game* game) {
     float timeSinceScreenChange = Interface_TimeSinceScreenChange(interface);
 
+    // GAME OVER TEXT
     DrawTextCentered("Game over!", SCREEN_WIDTH, 5, 30, (Color) {255, 100, 100, clamp(timeSinceScreenChange * 2 * 255, 0, 255) });
 
+    // SCORE TEXT
     if (timeSinceScreenChange > 0.5f) {
-        DrawTextCentered(TextFormat("Score: %i", game->currentScore), SCREEN_WIDTH, 35, 20, (Color) {255, 255, 200, clamp((timeSinceScreenChange - 2) * 2 * 255, 0, 255) });
+        DrawTextCentered(TextFormat("Score: %i", game->currentScore), SCREEN_WIDTH, 35, 20, (Color) {255, 255, 200, clamp((timeSinceScreenChange - 0.5) * 2 * 255, 0, 255) });
     } else { return; }
 
+    // NEW HIGHSCORE TEXT
     if (game->currentScore > game->saveData.highScore && timeSinceScreenChange > 2.0f) {
         DrawTextCentered("New highscore!", SCREEN_WIDTH, 65 + sinf(timeSinceScreenChange * 2) * 5, 20, YELLOW);
     }
 
+    // PLAY AGAIN TEXT
     if (GetTimeSinceDeath(game) > 2.0f) {
         int rb = ((sin(timeSinceScreenChange * 3) + 1) / 2) * (255 - 100) + 100;
         Color textColor = {rb, 255, rb, 255};
@@ -67,12 +73,13 @@ void Interface_Draw(Interface *interface, Game* game) {
         case (SCR_DEAD): DrawDeathScreen(interface, game); break;
 
         default: {}break;
-    }
+    } 
 
     #ifdef DEBUG
 
-        DrawText(TextFormat("by: %.2f", game->bird.y), 4, 4, 15, WHITE);
-        DrawText(TextFormat("bv: %.2f", game->bird.v), 4, 4+15, 15, WHITE);
+        // PLAYER POSITION AND VELOCITY TEXT
+        DrawText(TextFormat("by: %.2f", game->bird.y), 4, 4, 15, WHITE); // Position
+        DrawText(TextFormat("bv: %.2f", game->bird.v), 4, 4+15, 15, WHITE); // Velocity
 
     #endif
 }

@@ -49,8 +49,6 @@ typedef struct Game {
     float speed;
     float position;
 
-    double timeOfDeath;
-
     int currentScore;
 
     char* saveFileName;
