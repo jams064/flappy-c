@@ -126,7 +126,7 @@ void UpdateGame(Game* game) {
     } else if (game->state == GS_WAITING) {
         // Do bird AI (ok)
 
-        if (game->bird.y > SCREEN_HEIGHT * 0.5) {
+        if ((game->bird.y > SCREEN_HEIGHT * 0.25 && chance(40)) || game->bird.y > SCREEN_HEIGHT * 0.7) {
             Bird_Jump(&game->bird);
         }
     }

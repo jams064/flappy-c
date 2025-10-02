@@ -14,4 +14,7 @@
 // either b if a is less than b, or c if a is greater than c
 #define clamp(a, b, c) (min(c, max(a, b)))
 
+// Returns 1 if value between 1 and x is 1, 0 otherwise
+#define chance(x) (GetRandomValue(1, x) == 1)
+
 #endif
