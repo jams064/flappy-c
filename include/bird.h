@@ -28,12 +28,17 @@ typedef struct Bird {
 // Functions
 // ===================~-
 
+// Makes bird jump
 void Bird_Jump(Bird* bird);
+// Kills bird
 void Bird_Kill(Bird* bird);
 
+// Update bird position & velocity
 void Bird_Update(Bird* bird, float delta);
+// Draw bird
 void Bird_Draw(Bird* bird);
 
+// Cycles bird color
 void Bird_CycleColor(Bird* bird);
 
 #endif

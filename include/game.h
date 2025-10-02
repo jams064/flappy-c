@@ -13,6 +13,7 @@
 // Constants
 // ===================~-
 
+// Position of ground on screen
 #define FLOOR_POSITION SCREEN_HEIGHT - FLOOR_OFFSET
 
 // ===================~-
@@ -59,18 +60,42 @@ typedef struct Game {
 // Functions
 // ===================~-
 
+// Resets all members of provided game struct
+// to initial states
+void ResetGame(Game* game);
+
+// Starts the game, sets state to running and
+// interface to game screen
+void StartGame(Game* game);
+
+// Ends the game, sets interface to death screen
+void EndGame(Game* game);
+
+// Loads textures, load data, and calls ResetGame
 void InitGame(Game* game);
+
+// Unloads textures, saves data, and frees game struct from memory
 void DeInitGame(Game* game);
 
+// Loads all textures needed by the game
 void LoadTextures(Game* game);
+
+// Unloads all textures loaded by LoadTextures
 void UnloadTextures(Game* game);
 
+// Handles game inputs
 void ProcessInputs(Game* game);
+
+// Updates game states, and entities
 void UpdateGame(Game* game);
+
+// Renders game
 void DrawGame(Game* game);
 
+// Adds pipe to game
 void AddPipe(Game* game, Pipe* pipe, int index);
 
+// Sets file name to save and load from
 void SetSaveFileName(Game* game, char* name);
 
 // Returns time since the bird died,

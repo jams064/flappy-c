@@ -7,6 +7,7 @@
 // Types
 // ===================~-
 
+// Unused, maybe?
 typedef enum {
     TOP,
     BOTTOM,
@@ -17,6 +18,7 @@ typedef enum {
 // Functions
 // ===================~-
 
+// Helper function to draw standard raylib text centered within xBounds
 void DrawTextCentered(const char* text, int xBounds, int yPosition, float fontSize, Color color);
 
 #endif

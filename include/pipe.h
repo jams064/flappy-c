@@ -7,6 +7,7 @@
 // Constants
 // ===================~-
 
+// Width of pipe on screen, as well as collision
 #define PIPE_WIDTH 30
 
 // ===================~-
@@ -36,11 +37,16 @@ typedef struct Bird Bird;
 // Functions
 // ===================~-
 
+// Draws pipe
 void Pipe_Draw(Pipe* pipe);
+// Update pipe's position
 void Pipe_Update(Pipe* pipe, float speed, float delta);
 
+// Creates new pipe
 Pipe Pipe_New(int xPosition, int yPosition, int spacing, Color color);
 
+// Checks if bird is inside the pipe, if not returns DIR_NONE, if yes
+// returns DIR_{Direction of collision}
 PipeCollisionDirection Pipe_GetCollisionDirection(Pipe* pipe, Bird* bird);
 
 #endif

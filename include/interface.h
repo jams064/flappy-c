@@ -7,6 +7,7 @@
 // Constants
 // ===================~-
 
+// Whether to render debug text on screen, comment out to disable
 #define DEBUG
 
 // ===================~-
@@ -33,9 +34,12 @@ typedef struct Game Game;
 // Functions
 // ===================~-
 
+// Draws all interface
 void Interface_Draw(Interface *interface, Game* game);
 
+// Switches the current screen
 void Interface_SwitchScreen(Interface *interface, Screen screen);
+// Returns the time between the screen changing, and now
 float Interface_TimeSinceScreenChange(Interface* interface);
 
 #endif
