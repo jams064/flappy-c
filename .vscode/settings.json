@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.dbclient-js": "javascript",
+        "resource_dir.h": "c",
+        "cstdio": "c",
+        "bird.h": "c",
+        "pipe.h": "c",
+        "save.h": "c",
+        "interface.h": "c",
+        "game.h": "c",
+        "_oldmain": "c",
+        "config.h": "c"
+    },
+    "makefile.configureOnOpen": true
+}

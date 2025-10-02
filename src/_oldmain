@@ -1,0 +1,791 @@
+//---------------------------------
+//
+//  Inclusions
+//
+//---------------------------------
+
+#include <raylib.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+
+#include "resource_dir.h"
+
+//---------------------------------
+//
+//  Definitions
+//
+//---------------------------------
+
+#define SCREEN_WIDTH 200
+#define SCREEN_HEIGHT 300
+#define FLOOR_OFFSET 30
+
+#define GRAVITY 9.8
+#define PIPE_WIDTH 30
+
+#define MAX_PIPES 16
+
+#define TIME_SCALE 1
+
+// Macro to get length of an array x.
+#define arrlen(x) sizeof(x) / sizeof(x[0])
+
+// Macro to get true (1) if value between 1 and x lands on 1, false (0) if otherwise.
+#define chance(x) GetRandomValue(1, x) == 1
+
+// Time since last frame adjusted to timescale
+#define delta GetFrameTime() * TIME_SCALE
+
+//---------------------------------
+//
+//  Types
+//
+//---------------------------------
+
+typedef enum
+{
+    GS_WAITING,
+    GS_RUNNING,
+    GS_ENDED,
+    GS_PAUSED
+} GameState;
+
+typedef enum
+{
+    DIR_NONE,
+    DIR_LEFT,
+    DIR_RIGHT,
+    DIR_TOP,
+    DIR_BOTTOM
+} CollisionDirection;
+
+typedef struct
+{
+    float x;
+    int y;
+
+    int spacing;
+
+    Color color;
+} Pipe;
+
+typedef struct
+{
+    float x;
+    float y;
+    float tx;
+
+    float w;
+    float h;
+
+    float v;
+} Bird;
+
+typedef struct
+{
+    Texture bird;
+    Texture pipe;
+    Texture background;
+    Texture foreground;
+} Textures;
+
+typedef struct
+{
+    float lastPipeSpawnPosition;
+    int currentPipeIndex;
+    GameState gameState;
+    float speed;
+    float pos;
+    double deathTime;
+} State;
+
+typedef struct
+{
+    int highScore;
+    Color birdColor;
+} Save;
+
+typedef struct
+{
+    Pipe pipes[MAX_PIPES];
+    Bird bird;
+    Textures textures;
+    State state;
+    int score;
+    Save saveData;
+} Game;
+
+//---------------------------------//
+//                                 //
+//   Constants
+//                                 //
+//---------------------------------//
+
+const Color birdColors[7] = {
+    WHITE,
+    RED,
+    YELLOW,
+    GREEN,
+    BLUE,
+    PINK,
+    BLACK};
+
+//---------------------------------
+//
+//  Functions
+//
+//---------------------------------
+
+float lerp(float a, float b, float t);
+void Jump(Bird *p_Bird);
+void Kill(Game *p_Game);
+
+void InitGame(Game *p_Game)
+{
+    // Update high score
+    if (p_Game->score > p_Game->saveData.highScore)
+    {
+        // printf("Saved highscore");
+        (&p_Game->saveData)->highScore = p_Game->score;
+    }
+
+    p_Game->score = 0;
+    p_Game->bird = (Bird){
+        .x = SCREEN_WIDTH / 2,
+        .y = SCREEN_HEIGHT * 0.25,
+        .tx = SCREEN_WIDTH / 2,
+        .v = 0,
+        .w = 20,
+        .h = 16};
+    p_Game->state = (State){
+        .currentPipeIndex = 0,
+        .lastPipeSpawnPosition = 0,
+        .speed = 120,
+        .gameState = GS_WAITING,
+        .deathTime = -1.0};
+
+    memset(p_Game->pipes, 0, sizeof(p_Game->pipes));
+}
+
+void LoadTextures(Game *p_Game)
+{
+    p_Game->textures = (Textures){
+        // .background = LoadTexture("bg.png"),
+        .foreground = LoadTexture("ground.png"),
+        .bird = LoadTexture("bird.png"),
+        .pipe = LoadTexture("pipeNseg.png")};
+}
+
+void UnloadTextures(Game *p_Game)
+{
+    Textures *p_Textures = &p_Game->textures;
+
+    UnloadTexture(p_Textures->bird);
+    UnloadTexture(p_Textures->pipe);
+}
+
+void DrawBird(Game *p_Game)
+{
+    Bird *bird = &p_Game->bird;
+    Textures *textures = &p_Game->textures;
+    Texture birdTexture = textures->bird;
+
+    const int bWidth = birdTexture.width;
+    const int bHeight = birdTexture.height;
+
+    Rectangle source = {.x = 0, .y = 0, .width = bWidth, .height = bHeight};
+
+    float wFac = bird->w / bWidth;
+    float hFac = bird->h / bHeight;
+
+    Rectangle target = {.x = bird->x, .y = bird->y, .width = bWidth * wFac, .height = bHeight * hFac};
+    Vector2 origin = {.x = bWidth / 2, .y = bHeight / 2};
+
+    DrawTexturePro(birdTexture, source, target, origin, bird->v * 7, p_Game->saveData.birdColor);
+}
+
+void DrawPipe(Game *p_Game, Pipe *p_Pipe)
+{
+    Textures *textures = &p_Game->textures;
+    Texture pTexture = textures->pipe;
+
+    const int pWidth = pTexture.width;
+    const int pHeight = pTexture.height;
+
+    // Both Pipes
+
+    Rectangle source = {.x = 0, .y = 0, .width = pWidth, .height = pHeight};
+    NPatchInfo patchInfo = {(Rectangle){0.0, 0.0, pWidth, pHeight}, 2, 6, 4, 1, NPATCH_NINE_PATCH};
+
+    const int sHeight = SCREEN_HEIGHT;
+    const int sWidth = PIPE_WIDTH;
+
+    // Bottom Pipe
+
+    Rectangle target0 = {.x = p_Pipe->x - pWidth, .y = p_Pipe->y + SCREEN_HEIGHT / 2 + p_Pipe->spacing / 2, .width = sWidth, .height = sHeight};
+
+    DrawTextureNPatch(pTexture, patchInfo, target0, (Vector2){.x = pWidth / 2, .y = 0}, 0, p_Pipe->color);
+
+    // Top Pipe
+
+    Rectangle target1 = {.x = p_Pipe->x + pWidth, .y = p_Pipe->y + SCREEN_HEIGHT / 2 - p_Pipe->spacing / 2, .width = sWidth, .height = sHeight};
+
+    DrawTextureNPatch(pTexture, patchInfo, target1, (Vector2){.x = pWidth / 2, .y = pHeight}, 180, p_Pipe->color);
+}
+
+// Draws all pipes
+void DrawPipes(Game *p_Game, Pipe p_Pipes[MAX_PIPES], size_t size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        Pipe p_Pipe = p_Pipes[i];
+
+        DrawPipe(p_Game, &p_Pipe);
+    }
+}
+
+// Draw the foreground
+void DrawGround(Game *p_Game)
+{
+    State *state = &p_Game->state;
+
+    Texture floorTexture = p_Game->textures.foreground;
+
+    int fHeight = floorTexture.height;
+    int fWidth = floorTexture.width;
+    int renderWidth = fWidth * (FLOOR_OFFSET / fHeight);
+
+    int tileCount = ceil(SCREEN_WIDTH / fWidth) + 1;
+    int tileOffset = (int)p_Game->state.pos % renderWidth;
+
+    for (int i = 0; i < tileCount; i++)
+    {
+        DrawTexturePro(floorTexture, (Rectangle){0, 0, fWidth, fHeight}, (Rectangle){-tileOffset + i * renderWidth, SCREEN_HEIGHT - FLOOR_OFFSET, renderWidth, FLOOR_OFFSET}, (Vector2){0, 0}, 0, WHITE);
+    }
+}
+
+void DrawTextCentered(const char *text, int textSize, int y, Color color)
+{
+    int w = MeasureText(text, textSize);
+
+    DrawText(text, SCREEN_WIDTH / 2 - w / 2, y, textSize, color);
+}
+
+// Draw the interface
+void DrawInterface(Game *p_Game)
+{
+    // Switch between "Scenes"
+
+    switch (p_Game->state.gameState)
+    {
+    case GS_WAITING:
+        DrawText("Flap to play!", 5, 5, 25, WHITE);                                          // Hint
+        DrawText(TextFormat("Highscore: %i", p_Game->saveData.highScore), 5, 30, 10, WHITE); // Highscore
+
+        // Controls
+        DrawText("Click / Space / Up Arrow to flap", 5, SCREEN_HEIGHT - 20, 15, WHITE);
+        DrawText("P to pause in game", 5, SCREEN_HEIGHT - 40, 15, WHITE);
+        DrawText("C to cycle color", 5, SCREEN_HEIGHT - 60, 15, WHITE);
+
+        break;
+
+    case GS_RUNNING:
+        DrawText(TextFormat("Score: %i", p_Game->score), 5, 5, 20, WHITE);                   // Current Score
+        DrawText(TextFormat("Highscore: %i", p_Game->saveData.highScore), 5, 25, 15, WHITE); // High score
+
+        break;
+
+    case GS_ENDED:
+    {
+        int offset = SCREEN_HEIGHT * 0.1;
+
+        DrawTextCentered("Game Over!", 30, offset, WHITE);
+
+        if (p_Game->score > p_Game->saveData.highScore && GetTime() - p_Game->state.deathTime > 0.5)
+        {
+            DrawTextCentered("New Highscore!", 25, offset + 35, YELLOW);
+        }
+
+        // Only display if you are able to
+        if (GetTime() - p_Game->state.deathTime > 1.5)
+        {
+            DrawTextCentered("Flap to play again", 20, offset + 65, WHITE);
+        }
+    }
+
+    break;
+
+    case GS_PAUSED:
+        DrawTextCentered("Paused!", 30, SCREEN_HEIGHT * 0.25, WHITE);
+        DrawTextCentered("Press P to unpause", 15, SCREEN_HEIGHT * 0.25 + 30, WHITE);
+
+    default:
+        break;
+    }
+}
+
+// Adds a pipe to the pipes array
+void AddPipe(Game *p_Game, int height, int idx)
+{
+    Pipe pipe = (Pipe){
+        .x = SCREEN_WIDTH + 100,
+        .y = height,
+        .spacing = GetRandomValue(60, 80),
+        .color = WHITE};
+
+    p_Game->pipes[idx] = pipe;
+}
+
+// Check collision with pipe
+CollisionDirection GetBirdsCollisionWithPipe(Bird *p_Bird, Pipe *p_Pipe)
+{
+    float bx = p_Bird->x;
+    float by = p_Bird->y;
+
+    float pXmin = p_Pipe->x - (float)PIPE_WIDTH / 2.0f - p_Bird->w / 2;
+    float pXmax = pXmin + PIPE_WIDTH;
+
+    // Check collision on y axis
+    // if the bird is NOT between the minX and maxX of the pipe
+    int birdIsBeforePipe = bx < pXmin;
+    int pipeIsBeforeBird = bx > pXmax;
+    int insidePipe = !birdIsBeforePipe && !pipeIsBeforeBird;
+
+    // If the bird is not inside pipe, there's no way to collide
+    if (!insidePipe)
+    {
+        // printf("Not in X bounds: %f | %f / %f\n", bx, pXmin, pXmax);
+        return DIR_NONE;
+    }
+
+    float pYmin = p_Pipe->y - p_Pipe->spacing / 2 + SCREEN_HEIGHT / 2 + p_Bird->h / 2;
+    float pYmax = pYmin + p_Pipe->spacing - p_Bird->h;
+
+    // Check collision on x axis
+    // if the bird is between the minY and maxY of the pipe (Opening)
+
+    int clearedTopPipe = by > pYmin;
+    int clearedBottomPipe = by < pYmax;
+
+    int betweenPipes = clearedTopPipe && clearedBottomPipe;
+
+    // If bird is between the pipes, then there's no way for it to collide.
+    if (betweenPipes)
+    {
+        return DIR_NONE;
+    }
+
+    // printf("%f | %f / %f\n", by, pYmin, pYmax);
+    // println("Collides");
+
+    // If collided on Y axis (hit sides of pipe)
+    int xDirection = p_Bird->x > p_Pipe->x;
+    int yDirection = p_Bird->y > (p_Pipe->y + SCREEN_HEIGHT / 2);
+
+    int notActuallyBetweenPipes = fabs(p_Bird->y - pYmin) > p_Bird->h / 2 && fabs(p_Bird->y - pYmax) > p_Bird->h / 2;
+
+    // If the bird is not between opening of pipes, then it must have hit the side
+    if (notActuallyBetweenPipes)
+    {
+        // Less than 0 = left
+        if (xDirection < 0)
+        {
+            return DIR_RIGHT;
+        }
+        else
+        {
+            return DIR_LEFT;
+        }
+    }
+    else
+    {
+        // Less than 0 = top
+        if (yDirection > 0)
+        {
+            return DIR_BOTTOM;
+        }
+        else
+        {
+            return DIR_TOP;
+        }
+    }
+}
+
+// Updates bird
+void UpdateBird(Game *p_Game)
+{
+    Bird *bird = &p_Game->bird;
+
+    // Gain acceleration due to gravity only when velocity is positive and not on floor
+    // if not, just reset velocity
+    if (bird->y < SCREEN_HEIGHT - FLOOR_OFFSET)
+    {
+        bird->v += GRAVITY * delta;
+    }
+    bird->y += bird->v;
+    if (fabs(bird->x - bird->tx) < 3)
+    {
+        bird->x = bird->tx;
+    }
+    else
+    {
+        bird->x = lerp(bird->x, bird->tx, delta);
+    }
+
+    if (p_Game->state.gameState == GS_WAITING)
+    {
+        if ((bird->y > SCREEN_HEIGHT * 0.25 && chance(20)) || bird->y > SCREEN_HEIGHT * 0.5)
+        {
+            Jump(bird);
+        }
+    }
+    else
+    {
+        if (bird->y > SCREEN_HEIGHT - FLOOR_OFFSET)
+        {
+            bird->y = SCREEN_HEIGHT - FLOOR_OFFSET;
+            bird->v *= -0.5;
+
+            if (p_Game->state.gameState == GS_RUNNING)
+            {
+                Kill(p_Game);
+            }
+        }
+        else if (p_Game->state.gameState == GS_RUNNING)
+        {
+            // Check if bird is either above the screen, or below / on the floor
+            // and kill it if it is. (poor bird!)
+            if (bird->y <= 0 || bird->y >= SCREEN_HEIGHT - FLOOR_OFFSET)
+            {
+                Kill(p_Game);
+            }
+
+            for (int i = 0; i < MAX_PIPES; i++)
+            {
+                Pipe pipe = p_Game->pipes[i];
+                if (pipe.spacing == 0)
+                {
+                    continue;
+                }
+
+                CollisionDirection collision = GetBirdsCollisionWithPipe(bird, &pipe);
+                // bool collides = false;
+                if (collision)
+                {
+                    Kill(p_Game);
+
+                    switch (collision)
+                    {
+                    case DIR_LEFT:
+                        // println("Left");
+                        (&p_Game->state)->speed *= -0.75;
+                        break;
+
+                    case DIR_RIGHT:
+                        // println("Right");
+                        break;
+
+                    case DIR_BOTTOM:
+                        // println("Bottom");
+                        bird->v = fabs(bird->v) * -0.75;
+                        break;
+
+                    case DIR_TOP:
+                        // println("Top");
+                        bird->v = fabs(bird->v) * 0.9;
+                        break;
+
+                    default:
+                        break;
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Make the bird jump
+void Jump(Bird *p_Bird)
+{
+    p_Bird->v = -3;
+}
+
+// Kills the bird
+void Kill(Game *p_Game)
+{
+    p_Game->state.gameState = GS_ENDED;
+    p_Game->state.deathTime = GetTime();
+}
+
+// Updates all pipes
+void UpdatePipes(Game *p_Game, Pipe p_Pipes[MAX_PIPES], size_t size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        Pipe *p_Pipe = &p_Pipes[i];
+
+        const int px = p_Pipe->x;
+
+        p_Pipe->x -= p_Game->state.speed * delta;
+
+        // Check whether pipe just passed the bird, if so, add to score.
+        if (p_Pipe->x < p_Game->bird.x && px >= p_Game->bird.x)
+        {
+            p_Game->score++;
+        }
+
+        // Check whether the pipe went off screen
+        if (p_Pipe->x <= 0)
+        {
+            // Do something I guess
+        }
+    }
+}
+
+void CycleColor(Game *p_Game)
+{
+    Save *p_Save = &p_Game->saveData;
+
+    size_t colorCount = arrlen(birdColors);
+    for (int i = 0; i < colorCount; i++)
+    {
+        Color thisColor = birdColors[i];
+        Color nextColor = birdColors[(i + 1) % colorCount];
+
+        if (ColorIsEqual(p_Save->birdColor, thisColor))
+        {
+            p_Save->birdColor = nextColor;
+            break;
+        }
+        else if (i == (colorCount - 1))
+        {
+            p_Save->birdColor = birdColors[0];
+        }
+    }
+}
+
+bool IsMainActionPressed() {
+    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP);
+}
+
+// Handle Input
+// Handles user input and performs actions
+void ProcessInputs(Game *p_Game)
+{
+    const int mainActionPressed = IsMainActionPressed();
+
+    // Check for pause key
+    if (IsKeyPressed(KEY_P))
+    {
+        if (p_Game->state.gameState == GS_RUNNING)
+        {
+            (&p_Game->state)->gameState = GS_PAUSED;
+        }
+        else if (p_Game->state.gameState == GS_PAUSED)
+        {
+            (&p_Game->state)->gameState = GS_RUNNING;
+        }
+    }
+
+    // Cycle colors
+    if (IsKeyPressed(KEY_C))
+    {
+        printf("Color\n");
+        CycleColor(p_Game);
+    }
+
+    if (mainActionPressed && p_Game->state.gameState != GS_PAUSED)
+    {
+        State *p_State = &p_Game->state;
+
+        if (p_State->gameState == GS_WAITING)
+        {
+            p_State->gameState = GS_RUNNING;
+            p_Game->bird.tx = 30;
+            Jump(&p_Game->bird);
+        }
+        else if (p_State->gameState == GS_RUNNING)
+        {
+            Jump(&p_Game->bird);
+        }
+        else if (p_State->gameState == GS_ENDED)
+        {
+            if (GetTime() - p_State->deathTime > 1.5)
+            {
+                InitGame(p_Game);
+            }
+        }
+    }
+}
+
+// Update Game
+// Updates all game elements
+void UpdateGame(Game *p_Game)
+{
+    State *p_State = &p_Game->state;
+
+    if (p_State->gameState == GS_PAUSED)
+    {
+        return;
+    }
+
+    // if (state->gameState == GS_WAITING)
+    // {
+    // 	return;
+    // }
+
+    if (p_State->gameState == GS_RUNNING)
+    {
+        if (p_Game->state.pos - p_Game->state.lastPipeSpawnPosition > 150 && p_Game->state.gameState == GS_RUNNING)
+        {
+            p_State->lastPipeSpawnPosition = p_Game->state.pos;
+
+            AddPipe(p_Game, GetRandomValue(-100, 100), p_State->currentPipeIndex++);
+            p_State->currentPipeIndex = p_State->currentPipeIndex % MAX_PIPES;
+        }
+    }
+
+    UpdateBird(p_Game);
+    if (p_State->gameState != GS_WAITING)
+    {
+        UpdatePipes(p_Game, p_Game->pipes, MAX_PIPES);
+    }
+
+    // Update ground position for proper ground rendering
+    (&p_Game->state)->pos += p_Game->state.speed * delta;
+
+    // Check if the bird is dead, and make speed move towards zero.
+    if (p_Game->state.gameState == GS_ENDED)
+    {
+        // turnary checks if bird is in air or on the ground, if the latter it will lose speed slower.
+        p_State->speed = lerp(p_State->speed, 0, delta * (p_Game->bird.y < SCREEN_HEIGHT - FLOOR_OFFSET ? 0.5 : 5));
+    }
+}
+
+// Render Game
+// Renders all game elements
+void RenderGame(Game *p_Game)
+{
+    ClearBackground(BLUE);
+
+    DrawPipes(p_Game, p_Game->pipes, MAX_PIPES);
+    DrawGround(p_Game);
+    DrawBird(p_Game);
+
+    DrawInterface(p_Game);
+}
+
+// Saves game to file
+void SaveGame(Save *save, const char *fileName)
+{
+    FILE *saveFilePointer = fopen(fileName, "wb");
+    if (saveFilePointer == NULL)
+    {
+        perror("===== Error opening file for saving.");
+        return;
+    }
+
+    fwrite(save, sizeof(Save), 1, saveFilePointer);
+    fclose(saveFilePointer);
+
+    printf("===== Game saved successfully!\n");
+}
+
+// Loads game from file
+void LoadGame(Save *save, const char *fileName)
+{
+    FILE *saveFilePointer = fopen(fileName, "rb");
+    if (saveFilePointer == NULL)
+    {
+        perror("===== Error opening file for loading.");
+
+        *save = (Save){
+            .birdColor = WHITE,
+            .highScore = 0};
+
+        return;
+    }
+
+    fread(save, sizeof(Save), 1, saveFilePointer);
+    fclose(saveFilePointer);
+
+    if (ColorIsEqual(save->birdColor, BLANK))
+    {
+        save->birdColor = WHITE;
+    }
+
+    printf("===== Game loaded successfully!\n");
+}
+
+char *join_path(const char *path1, const char *path2)
+{
+    char *result = malloc(strlen(path1) + strlen(path2) + 2);
+    strcpy(result, path1);
+    strcat(result, "/");
+    strcat(result, path2);
+    return result;
+}
+
+//---------------------------------
+//
+//  Main
+//
+//---------------------------------
+
+int main(void)
+{
+    const char *saveFileName = join_path(GetApplicationDirectory(), "flappysave.bin");
+
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Flappy C");
+    SearchAndSetResourceDir("resources");
+
+    Game *p_Game = (Game *)calloc(1, sizeof(Game));
+
+    LoadGame(&p_Game->saveData, saveFileName);
+
+    InitGame(p_Game);
+    LoadTextures(p_Game);
+
+    SetTargetFPS(60);
+
+    while (!WindowShouldClose())
+    {
+        ProcessInputs(p_Game);
+        UpdateGame(p_Game);
+
+        // Render
+        BeginDrawing();
+
+        RenderGame(p_Game);
+
+        EndDrawing();
+    }
+
+    UnloadTextures(p_Game);
+
+    CloseWindow();
+
+    // Save highscore to save file
+    SaveGame(&p_Game->saveData, saveFileName);
+
+    // Free game
+    free(p_Game);
+
+    return 0;
+}
+
+//---------------------------------//
+//                                 //
+//   Implementation
+//                                 //
+//---------------------------------//
+
+float lerp(float a, float b, float t)
+{
+    return a + t * (b - a);
+}
