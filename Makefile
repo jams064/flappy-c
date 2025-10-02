@@ -1,3 +1,4 @@
+# Compiler to use
 CC = clang
 
 CFLAGS = -Wall -Iinclude
