@@ -20,4 +20,7 @@
 // Returns the length of provided fixed size array
 #define arrlen(x) (sizeof(x) / sizeof(x[0]))
 
+// Alias for char
+#define byte char
+
 #endif

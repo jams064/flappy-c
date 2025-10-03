@@ -22,6 +22,8 @@ char* join_path(const char* path1, const char* path2) {
 // Entry
 // ===================~-
 
+void MainLoop(Game* game);
+
 int main(void)
 {
     char *saveFileName = join_path(GetApplicationDirectory(), "flappysave.bin");
@@ -40,14 +42,7 @@ int main(void)
 
     while (!WindowShouldClose())
     {
-        UpdateGame(game);
-
-        // Render
-        BeginDrawing();
-
-            DrawGame(game);
-
-        EndDrawing();
+        MainLoop(game);
     }
 
     DeInitGame(game);
@@ -56,4 +51,17 @@ int main(void)
     CloseWindow();
 
     return 0;
+}
+
+// ========================
+
+void MainLoop(Game* game) {
+    UpdateGame(game);
+
+    // Render
+    BeginDrawing();
+
+        DrawGame(game);
+
+    EndDrawing();
 }

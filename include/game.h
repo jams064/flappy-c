@@ -33,26 +33,34 @@ typedef struct {
     Texture ground;
 } Textures;
 
+typedef struct {
+    Sound flap;
+    Sound hit;
+    Sound die;
+    Sound score;
+} Sounds;
+
 typedef struct Game {
-    Pipe pipes[MAX_PIPES];
-    Bird bird;
+    Pipe pipes[MAX_PIPES]; // Pipe array
+    Bird bird; // Bird (Player)
 
-    Textures textures;
-    SaveData saveData;
-    Interface interface;
+    Textures textures; // Texture struct
+    SaveData saveData; // Save data
+    Interface interface; // Interface struct
+    Sounds sounds; // Sounds struct
     
-    float lastPipeSpawnPosition;
-    int currentPipeIndex;
+    float lastPipeSpawnPosition; // Position of last pipe spawn
+    unsigned int currentPipeIndex; // Current index of pipe array, wraps around
 
-    GameState state;
+    GameState state; // State of game
 
-    float speed;
-    float position;
+    float speed; // Speed of scrolling
+    float position; // Current scroll position
 
-    int currentScore;
-    float timeOfScore;
+    unsigned int currentScore; // Score
+    float timeOfScore; // Time that last score
 
-    char* saveFileName;
+    char* saveFileName; // Name of save file to save and load
 } Game;
 
 // ===================~-
@@ -70,6 +78,12 @@ void StartGame(Game* game);
 // Ends the game, sets interface to death screen
 void EndGame(Game* game);
 
+// Pauses the game
+void PauseGame(Game* game);
+
+// Resumes the game after a pause
+void ResumeGame(Game* game);
+
 // Loads textures, load data, and calls ResetGame
 void InitGame(Game* game);
 
@@ -81,6 +95,12 @@ void LoadTextures(Game* game);
 
 // Unloads all textures loaded by LoadTextures
 void UnloadTextures(Game* game);
+
+// Loads all sounds needed by the game
+void LoadSounds(Game* game);
+
+// Unloads all sounds loaded by LoadSounds
+void UnloadSounds(Game* game);
 
 // Handles game inputs
 void ProcessInputs(Game* game);

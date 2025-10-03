@@ -73,6 +73,13 @@ static void DrawDeathScreen(Interface* interface, Game* game) {
     }
 }
 
+static void DrawPauseScreen(Interface* interface, Game* game) {
+    TextCentered("Paused!", SCREEN_WIDTH, 15, 30, WHITE);
+    TextCentered(TextFormat("Score: %i", game->currentScore), SCREEN_WIDTH, 45, 20, YELLOW);
+
+    TextCentered("[P] to Unpause", SCREEN_WIDTH, SCREEN_HEIGHT * 0.8, 20, WHITE);
+}
+
 void Interface_Draw(Interface *interface, Game* game) {
     switch (interface->currentScreen) {
         case (SCR_MENU): DrawMenuScreen(interface, game); break;
@@ -80,6 +87,8 @@ void Interface_Draw(Interface *interface, Game* game) {
         case (SCR_GAME): DrawGameScreen(interface, game); break;
 
         case (SCR_DEAD): DrawDeathScreen(interface, game); break;
+
+        case (SCR_PAUSE): DrawPauseScreen(interface, game); break;
 
         default: {}break;
     } 

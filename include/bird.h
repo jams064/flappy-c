@@ -23,7 +23,7 @@ typedef struct Bird {
     Color color;
     Texture texture;
 
-    double timeOfDeath;
+    double timeOfDeath; // Time the bird died at
 } Bird;
 
 // ===================~-

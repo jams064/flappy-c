@@ -54,25 +54,43 @@ void ResetGame(Game* game) {
 }
 
 void StartGame(Game* game) {
-    game->state = GS_RUNNING;
     game->bird.tx = 30;
 
-    Interface_SwitchScreen(&game->interface, SCR_GAME);
+    ResumeGame(game);
 }
 
 void EndGame(Game* game) {
     game->state = GS_ENDED;
 
+    PlaySound(game->sounds.die);
     Interface_SwitchScreen(&game->interface, SCR_DEAD);
+}
+
+void PauseGame(Game* game) {
+    game->state = GS_PAUSED;
+
+    Interface_SwitchScreen(&game->interface, SCR_PAUSE);
+}
+
+void ResumeGame(Game* game) {
+    game->state = GS_RUNNING;
+
+    Interface_SwitchScreen(&game->interface, SCR_GAME);
 }
 
 void Score(Game* game) {
     game->currentScore++;
     game->timeOfScore = GetTime();
+
+    PlaySound(game->sounds.score);
 }
 
 void InitGame(Game* game) {
+    InitAudioDevice();
+
     LoadTextures(game);
+    LoadSounds(game);
+    
     LoadSaveData(&game->saveData, game->saveFileName);
 
     ResetGame(game);
@@ -80,7 +98,11 @@ void InitGame(Game* game) {
 
 void DeInitGame(Game* game) {
     UnloadTextures(game);
+    UnloadSounds(game);
+
     SaveSaveData(&game->saveData, game->saveFileName);
+
+    CloseAudioDevice();
 
     free(game);
 }
@@ -97,6 +119,22 @@ void UnloadTextures(Game* game) {
     UnloadTexture(game->textures.bird);
     UnloadTexture(game->textures.pipe);
     UnloadTexture(game->textures.ground);
+}
+
+void LoadSounds(Game* game) {
+    game->sounds = (Sounds) {
+        .die = LoadSound("audio/sfx_die.wav"),
+        .flap = LoadSound("audio/sfx_wing.wav"),
+        .hit = LoadSound("audio/sfx_hit.wav"),
+        .score = LoadSound("audio/sfx_point.wav"),
+    };
+}
+
+void UnloadSounds(Game* game) {
+    UnloadSound(game->sounds.die);
+    UnloadSound(game->sounds.hit);
+    UnloadSound(game->sounds.flap);
+    UnloadSound(game->sounds.score);
 }
 
 void UpdateGame(Game* game) {
@@ -153,6 +191,7 @@ void UpdateGame(Game* game) {
         PipeCollisionDirection collision = Pipe_GetCollisionDirection(pipe, &game->bird);
         if (collision != DIR_NONE) {
             Bird_Kill(&game->bird);
+            PlaySound(game->sounds.hit);
 
             switch (collision) {
                 case DIR_LEFT:
@@ -199,8 +238,17 @@ void ProcessInputs(Game* game) {
             Bird_Jump(&game->bird);
         } else if (game->state == GS_RUNNING) {
             Bird_Jump(&game->bird);
+            PlaySound(game->sounds.flap);
         } else if (game->state == GS_ENDED && GetTimeSinceDeath(game) > 2.0f) {
             ResetGame(game);
+        }
+    }
+
+    if (IsKeyPressed(KEY_P)) {
+        if (game->state == GS_RUNNING) {
+            PauseGame(game);
+        } else if (game->state == GS_PAUSED) {
+            ResumeGame(game);
         }
     }
 }

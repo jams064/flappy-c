@@ -51,7 +51,7 @@ void Bird_Update(Bird* bird, float delta) {
     bird->y += bird->v;
 
     // Lerp x to target position
-    if (fabs(bird->x - bird->tx) < 3) {
+    if (fabs(bird->x - bird->tx) < 1) {
         bird->x = bird->tx;
     } else {
         bird->x = lerp(bird->x, bird->tx, delta);

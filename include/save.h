@@ -2,6 +2,7 @@
 #define SAVE_H
 
 #include <raylib.h>
+#include "macro.h"
 
 // ===================~-
 // Constants
@@ -15,9 +16,9 @@
 // ===================~-
 
 typedef struct {
-    int version;
+    unsigned byte version;
 
-    int highScore;
+    unsigned int highScore;
     Color birdColor;
 } SaveData;
 

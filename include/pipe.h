@@ -2,6 +2,7 @@
 #define PIPE_H
 
 #include <raylib.h>
+#include "macro.h"
 
 // ===================~-
 // Constants
@@ -16,7 +17,7 @@
 
 typedef struct {
     float x, y; // X and Y Position
-    int spacing; // Spacing between top and bottom pipes
+    unsigned byte spacing; // Spacing between top and bottom pipes
     Color color; // Color
     Texture texture;
     bool scored; // Has the bird passed through this pipe yet?
