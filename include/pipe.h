@@ -9,7 +9,17 @@
 // ===================~-
 
 // Width of pipe on screen, as well as collision
-#define PIPE_WIDTH 30
+#define PIPE_WIDTH 32
+
+// Distance between pipes
+#define PIPE_DISTANCE 100
+
+// Min and max spacing between top and bottom pipes
+#define PIPE_MIN_SPACING 55
+#define PIPE_MAX_SPACING 65
+
+// Max amount of distance openings of pipes can be from the previous
+#define PIPE_MAX_OFFSET 200
 
 // ===================~-
 // Types

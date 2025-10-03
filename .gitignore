@@ -3,4 +3,4 @@
 *.pxi
 
 # Directories
-/out
+out/

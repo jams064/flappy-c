@@ -16,6 +16,9 @@
 // Position of ground on screen
 #define FLOOR_POSITION SCREEN_HEIGHT - FLOOR_OFFSET
 
+#define MIN_PIPE_Y SCREEN_HEIGHT*0.2
+#define MAX_PIPE_Y SCREEN_HEIGHT*0.7
+
 // ===================~-
 // Types
 // ===================~-
@@ -49,7 +52,9 @@ typedef struct Game {
     Interface interface; // Interface struct
     Sounds sounds; // Sounds struct
     
-    float lastPipeSpawnPosition; // Position of last pipe spawn
+    float lastPipeSpawnPosition; // Position of last pipe spawn (x)
+    int lastPipeY; // Height of last pipe spawn (y)
+
     unsigned int currentPipeIndex; // Current index of pipe array, wraps around
 
     GameState state; // State of game

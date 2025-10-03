@@ -15,35 +15,35 @@ void Pipe_Draw(Pipe* pipe) {
     const int pWidth = texture.width;
     const int pHeight = texture.height;
 
+    const int sWidth = PIPE_WIDTH;
+    const int sHeight = SCREEN_HEIGHT;
+
     // Both Pipes
 
     NPatchInfo patchInfo = {(Rectangle){0.0, 0.0, pWidth, pHeight}, 4, 14, 6, 1, NPATCH_NINE_PATCH};
-    Vector2 origin = { .x = pWidth/2, .y = pHeight/2 };
-
-    const int sHeight = SCREEN_HEIGHT;
-    const int sWidth = PIPE_WIDTH;
+    // Vector2 origin = { .x = pWidth/2, .y = pHeight/2 };
 
     // Bottom Pipe
 
     Rectangle targetBottom = {
-        .x = pipe->x, 
-        .y = pipe->y + pipe->spacing/2 + pHeight/2, 
+        .x = pipe->x - sWidth/2, 
+        .y = pipe->y + pipe->spacing,
         .width = sWidth, 
         .height = sHeight
     };
 
-    DrawTextureNPatch(texture, patchInfo, targetBottom, origin, 0, pipe->color);
+    DrawTextureNPatch(texture, patchInfo, targetBottom, (Vector2) { 0, pHeight }, 0, pipe->color);
 
     // Top Pipe
 
     Rectangle targetTop = {
-        .x = pipe->x, 
-        .y = pipe->y - pipe->spacing/2 - pHeight/2 + 2, 
+        .x = pipe->x + sWidth/2, 
+        .y = pipe->y - pipe->spacing/2,
         .width = sWidth, 
         .height = sHeight
     };
 
-    DrawTextureNPatch(texture, patchInfo, targetTop, origin, 180, pipe->color);
+    DrawTextureNPatch(texture, patchInfo, targetTop, (Vector2) { 0, 0 }, 180, pipe->color);
 }
 
 void Pipe_Update(Pipe* pipe, float speed, float delta) {
@@ -80,8 +80,8 @@ PipeCollisionDirection Pipe_GetCollisionDirection(Pipe* pipe, Bird* bird) {
         return DIR_NONE;
     }
 
-    float pYmin = pipe->y - pipe->spacing / 2 + bird->h / 2;
-    float pYmax = pYmin + pipe->spacing - bird->h;
+    float pYmin = pipe->y - pipe->spacing / 2;
+    float pYmax = pYmin + pipe->spacing - bird->h/2;
 
     // Check collision on x axis
     // if the bird is between the minY and maxY of the pipe (Opening)

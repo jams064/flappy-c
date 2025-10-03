@@ -33,6 +33,7 @@ void ResetGame(Game* game) {
 
     game->currentPipeIndex = 0;
     game->lastPipeSpawnPosition = 0.0f;
+    game->lastPipeY = SCREEN_HEIGHT/2;
     game->currentScore = 0;
     game->timeOfScore = 0;
 
@@ -90,7 +91,7 @@ void InitGame(Game* game) {
 
     LoadTextures(game);
     LoadSounds(game);
-    
+
     LoadSaveData(&game->saveData, game->saveFileName);
 
     ResetGame(game);
@@ -160,15 +161,22 @@ void UpdateGame(Game* game) {
     Bird_Update(&game->bird, delta);
     if (game->state == GS_RUNNING) {
         // Check whether pipe can spawn and spawn if so
-        if (game->position - game->lastPipeSpawnPosition > 150 /* Pipe spawn distance*/) {
+        if (game->position - game->lastPipeSpawnPosition > (PIPE_WIDTH + PIPE_DISTANCE) /* Pipe spawn distance*/) {
             game->lastPipeSpawnPosition = game->position;
+
+            int minY = PIPE_MAX_OFFSET == -1 ? MIN_PIPE_Y : max(game->lastPipeY - PIPE_MAX_OFFSET, MIN_PIPE_Y);
+            int maxY = PIPE_MAX_OFFSET == -1 ? MAX_PIPE_Y : min(game->lastPipeY + PIPE_MAX_OFFSET, MAX_PIPE_Y);
+            int pipeY = GetRandomValue(minY, maxY);
 
             Pipe newPipe = Pipe_New(
                 SCREEN_WIDTH + PIPE_WIDTH*2, 
-                GetRandomValue(SCREEN_HEIGHT*0.2, SCREEN_HEIGHT*0.7), 
-                GetRandomValue(60, 70), 
+                pipeY, 
+                GetRandomValue(PIPE_MIN_SPACING, PIPE_MAX_SPACING), 
                 (Color) { 100, 255, 100, 255 }
             );
+
+            game->lastPipeY = pipeY;
+
             AddPipe(game, &newPipe, game->currentPipeIndex++);
             game->currentPipeIndex = game->currentPipeIndex % MAX_PIPES;
         }
