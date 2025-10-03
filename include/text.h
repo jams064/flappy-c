@@ -18,7 +18,10 @@ typedef enum {
 // Functions
 // ===================~-
 
+// Draws text in styled way
+void Text(const char* text, int x, int y, int fontSize, Color color);
+
 // Helper function to draw standard raylib text centered within xBounds
-void DrawTextCentered(const char* text, int xBounds, int yPosition, float fontSize, Color color);
+void TextCentered(const char* text, int xBounds, int yPosition, int fontSize, Color color);
 
 #endif

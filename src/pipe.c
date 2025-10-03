@@ -17,22 +17,33 @@ void Pipe_Draw(Pipe* pipe) {
 
     // Both Pipes
 
-    NPatchInfo patchInfo = {(Rectangle){0.0, 0.0, pWidth, pHeight}, 2, 6, 4, 1, NPATCH_NINE_PATCH};
+    NPatchInfo patchInfo = {(Rectangle){0.0, 0.0, pWidth, pHeight}, 4, 14, 6, 1, NPATCH_NINE_PATCH};
+    Vector2 origin = { .x = pWidth/2, .y = pHeight/2 };
 
     const int sHeight = SCREEN_HEIGHT;
     const int sWidth = PIPE_WIDTH;
 
     // Bottom Pipe
 
-    Rectangle target0 = {.x = pipe->x - pWidth, .y = pipe->y + pipe->spacing / 2, .width = sWidth, .height = sHeight};
+    Rectangle targetBottom = {
+        .x = pipe->x, 
+        .y = pipe->y + pipe->spacing/2 + pHeight/2, 
+        .width = sWidth, 
+        .height = sHeight
+    };
 
-    DrawTextureNPatch(texture, patchInfo, target0, (Vector2){.x = pWidth / 2, .y = 0}, 0, pipe->color);
+    DrawTextureNPatch(texture, patchInfo, targetBottom, origin, 0, pipe->color);
 
     // Top Pipe
 
-    Rectangle target1 = {.x = pipe->x + pWidth, .y = pipe->y - pipe->spacing / 2, .width = sWidth, .height = sHeight};
+    Rectangle targetTop = {
+        .x = pipe->x, 
+        .y = pipe->y - pipe->spacing/2 - pHeight/2 + 2, 
+        .width = sWidth, 
+        .height = sHeight
+    };
 
-    DrawTextureNPatch(texture, patchInfo, target1, (Vector2){.x = pWidth / 2, .y = pHeight}, 180, pipe->color);
+    DrawTextureNPatch(texture, patchInfo, targetTop, origin, 180, pipe->color);
 }
 
 void Pipe_Update(Pipe* pipe, float speed, float delta) {

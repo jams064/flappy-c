@@ -17,4 +17,7 @@
 // Returns 1 if value between 1 and x is 1, 0 otherwise
 #define chance(x) (GetRandomValue(1, x) == 1)
 
+// Returns the length of provided fixed size array
+#define arrlen(x) (sizeof(x) / sizeof(x[0]))
+
 #endif

@@ -50,6 +50,7 @@ typedef struct Game {
     float position;
 
     int currentScore;
+    float timeOfScore;
 
     char* saveFileName;
 } Game;

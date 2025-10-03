@@ -25,6 +25,7 @@ typedef enum {
 
 typedef struct {
     Screen currentScreen;
+    Screen previousScreen;
     double timeOfScreenChange;
 } Interface;
 

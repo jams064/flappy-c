@@ -1,3 +1,6 @@
-out/
+# File extensions
+*.o
+*.pxi
 
-src/*.o
+# Directories
+/out

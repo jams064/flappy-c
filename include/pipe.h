@@ -19,7 +19,7 @@ typedef struct {
     int spacing; // Spacing between top and bottom pipes
     Color color; // Color
     Texture texture;
-    bool scored;
+    bool scored; // Has the bird passed through this pipe yet?
 } Pipe;
 
 typedef enum {

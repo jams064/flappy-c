@@ -25,7 +25,7 @@ void ResetGame(Game* game) {
         .color = game->saveData.birdColor,
 
         .h = 15, .w = 20,
-        .x = 30, .y = 25, .tx = 30,
+        .x = SCREEN_WIDTH/2, .y = SCREEN_HEIGHT/2, .tx = SCREEN_WIDTH/2,
         .v = 0,
 
         .texture = game->textures.bird
@@ -34,8 +34,10 @@ void ResetGame(Game* game) {
     game->currentPipeIndex = 0;
     game->lastPipeSpawnPosition = 0.0f;
     game->currentScore = 0;
+    game->timeOfScore = 0;
 
     game->interface = (Interface) {
+        .previousScreen = SCR_UNKNOWN,
         .currentScreen = SCR_UNKNOWN,
         .timeOfScreenChange = GetTime()
     };
@@ -53,6 +55,7 @@ void ResetGame(Game* game) {
 
 void StartGame(Game* game) {
     game->state = GS_RUNNING;
+    game->bird.tx = 30;
 
     Interface_SwitchScreen(&game->interface, SCR_GAME);
 }
@@ -61,6 +64,11 @@ void EndGame(Game* game) {
     game->state = GS_ENDED;
 
     Interface_SwitchScreen(&game->interface, SCR_DEAD);
+}
+
+void Score(Game* game) {
+    game->currentScore++;
+    game->timeOfScore = GetTime();
 }
 
 void InitGame(Game* game) {
@@ -80,7 +88,7 @@ void DeInitGame(Game* game) {
 void LoadTextures(Game* game) {
     game->textures = (Textures) {
         .bird = LoadTexture("bird.png"),
-        .pipe = LoadTexture("pipeNseg.png"),
+        .pipe = LoadTexture("pipeNsegX.png"),
         .ground = LoadTexture("ground.png"),
     };
 }
@@ -117,7 +125,12 @@ void UpdateGame(Game* game) {
         if (game->position - game->lastPipeSpawnPosition > 150 /* Pipe spawn distance*/) {
             game->lastPipeSpawnPosition = game->position;
 
-            Pipe newPipe = Pipe_New(SCREEN_WIDTH + PIPE_WIDTH*2, GetRandomValue(SCREEN_HEIGHT*0.1, SCREEN_HEIGHT*0.7), GetRandomValue(60, 70), WHITE);
+            Pipe newPipe = Pipe_New(
+                SCREEN_WIDTH + PIPE_WIDTH*2, 
+                GetRandomValue(SCREEN_HEIGHT*0.2, SCREEN_HEIGHT*0.7), 
+                GetRandomValue(60, 70), 
+                (Color) { 100, 255, 100, 255 }
+            );
             AddPipe(game, &newPipe, game->currentPipeIndex++);
             game->currentPipeIndex = game->currentPipeIndex % MAX_PIPES;
         }
@@ -171,7 +184,7 @@ void UpdateGame(Game* game) {
             pipe->x <= game->bird.x && // Pipe is past the bird
             !pipe->scored
         ) {
-            game->currentScore++;
+            Score(game);
             pipe->scored = true;
         }
     }
