@@ -23,6 +23,11 @@ typedef enum {
     SCR_PAUSE,
 } Screen;
 
+typedef enum {
+    LAYOUT_HORIZONTAL,
+    LAYOUT_VERTICAL
+} LayoutDirection;
+
 typedef struct {
     Screen currentScreen;
     Screen previousScreen;

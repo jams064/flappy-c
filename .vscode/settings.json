@@ -9,7 +9,8 @@
         "interface.h": "c",
         "game.h": "c",
         "_oldmain": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "stdlib.h": "c"
     },
     "makefile.configureOnOpen": true
 }
