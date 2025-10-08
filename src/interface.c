@@ -15,6 +15,10 @@ static void DrawMenuScreen(Interface* interface, Game* game) {
     GUI_List(DIR_VERTICAL, 5, ALIGN_START, 0, 0, 0);
         
         GUI_Text("Flap to play!", (Vector2) {}, SCREEN_WIDTH, 20, WHITE, ALIGN_CENTER);
+        GUI_Text("Flap to play!", (Vector2) {}, SCREEN_WIDTH, 20, WHITE, ALIGN_CENTER);
+        GUI_Text("Flap to play!", (Vector2) {}, SCREEN_WIDTH, 20, WHITE, ALIGN_CENTER);
+        GUI_Text("Flap to play!", (Vector2) {}, SCREEN_WIDTH, 20, WHITE, ALIGN_CENTER);
+        GUI_Text("Flap to play!", (Vector2) {}, SCREEN_WIDTH, 20, WHITE, ALIGN_CENTER);
         GUI_Text(TextFormat("Highscore: %i", game->saveData.highScore), (Vector2) {}, SCREEN_WIDTH, 15, WHITE, ALIGN_CENTER);
 
     GUI_End();
@@ -88,6 +92,8 @@ static void DrawPauseScreen(Interface* interface, Game* game) {
 }
 
 void Interface_Draw(Interface *interface, Game* game) {
+    GUI_Start();
+
     switch (interface->currentScreen) {
         case (SCR_MENU): DrawMenuScreen(interface, game); break;
 
@@ -99,6 +105,8 @@ void Interface_Draw(Interface *interface, Game* game) {
 
         default: {}break;
     } 
+    
+    GUI_End();
 
     #ifdef DEBUG
 

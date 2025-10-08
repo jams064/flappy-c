@@ -18,20 +18,30 @@ typedef enum {
     ALIGN_END
 } GUI_Align;
 
+typedef enum {
+    UNDEFINED,
+    LIST,
+    PADDING,
+} GUI_ItemType;
+
 typedef struct {
     GUI_Direction direction;
     GUI_Align alignment;
     int padding;
+
+    int bounds;
+    int x;
+    int y;
+
+    int currentOffset;
 } sGUIList;
 
 typedef struct {
-    enum {
-        typUndefined,
-        typList,
-        typPadding
-    };
+    GUI_ItemType type;
 
-    void* value;
+    union item {
+        sGUIList list;
+    } item;
 } sGuiItem;
 
 typedef struct {
@@ -56,8 +66,8 @@ void GUI_StackInit(sGuiStack* stack);
 int GUI_StackEmpty(sGuiStack* stack);
 
 void GUI_StackPush(sGuiStack* stack, sGuiItem value);
-void GUI_StackPop(sGuiStack* stack);
-void GUI_StackPeek(sGuiStack* stack);
+sGuiItem GUI_StackPop(sGuiStack* stack);
+sGuiItem *GUI_StackPeek(sGuiStack* stack);
 
 // GUI functions
 void GUI_Start();
